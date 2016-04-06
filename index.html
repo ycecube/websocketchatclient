@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebSocketChat - Java Server</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script src="jquery.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      $(document).ready(function() {
+        var mouseX = 0;
+        var mouseY = 0;
+        
+        $('div#chat-window-title').mousedown(function(event){
+          $('div#chat-window-wrapper').css({
+            top: mouseX,
+            left: mouseY
+          });
+          //console.log(mouseX);
+        });
+        
+        $('body').mousemove(function(event) {
+          mouseX = event.pageX;
+          mouseY = event.pageY;
+        });
+      });
+      
+      var socket = new WebSocket('ws://ycarus.dyndns.org:1234');
+      
+      socket.onopen = function() {
+        $('input[name="message"]').keypress(function(event) {
+          var code = (event.keyCode ? event.keyCode : event.which);
+          if(code == 13) {
+            socket.send($('input[name="message"]').val());
+            //$('div#chat-window').append(singleMessage($('input[name="message"]').val()));
+            $('input[name="message"]').val('');
+            $('#chat-window').scrollTop($('#chat-window').prop('scrollHeight'));
+          }
+        });
+      }
+      
+      socket.onerror = function (error) {
+        console.log('WebSocket Error: ' + error);
+      };
+      
+      socket.onmessage = function (event) {
+        var data = event.data;
+        var nick = data.substring(0, data.indexOf(":") + 1);
+        var msg = data.substring(data.indexOf(":") + 1);
+        
+        $('div#chat-window').append(singleMessage(nick, msg));
+        $('#chat-window').scrollTop($('#chat-window').prop('scrollHeight'));
+      };
+      
+      function singleMessage(nick, msg) {
+        return '<div class="msg">' + 
+          '<div class="nick">' + nick + '</div>' +
+          '<div class="message">' + msg + '</div>' +
+        '</div>';
+      }
+    </script>
+    <style type="text/css">
+      div#chat-window-wrapper {
+        position: relative;
+      }
+      
+      div#chat-window-title {
+        height: 20px;
+      }
+      
+      div#chat-window {
+        width: 640px;
+        height: 320px;
+        border: 1px solid #000;
+        overflow: auto;
+      }
+      
+      div.nick {
+        font-weight: bold;
+        display: inline;
+      }
+      
+      div.message {
+        display: inline;
+        margin-left: 5px;
+        word-break: break-word;
+      }
+      
+      div#chat-message {
+        border: 1px solid #000;
+        border-top: none;
+        width: 640px;
+      }
+      
+      div#chat-message input {
+        border: none;
+        outline: none;
+        width: 640px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chat-window-wrapper">
+      <div id="chat-window-title">
+      </div>
+      <div id="chat-window">
+      </div>
+      <div id="chat-message">
+        <input type="text" name="message">
+      </div>
+    </div>
+  </body>
+</html>
